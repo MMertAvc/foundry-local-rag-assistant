@@ -1,0 +1,18 @@
+# Core - local model runtime (Windows/macOS/Linux)
+foundry-local-sdk>=1.2.3
+
+# Local ONNX embedding fallback. Foundry Local's embedding models need
+# Windows 11 24H2+ (build 26100); on Windows 10 the app automatically
+# falls back to this fully-local, CPU-only embedder (RAG_EMBEDDER=auto).
+fastembed>=0.3
+
+# Web UI (optional - the CLI works without it)
+streamlit>=1.38
+
+# Custom web UI (optional alternative to Streamlit) - already pulled in
+# transitively by streamlit, listed explicitly since server.py depends on it directly
+starlette>=0.40.0
+uvicorn>=0.30.0
+
+# Development / testing
+pytest>=8.0

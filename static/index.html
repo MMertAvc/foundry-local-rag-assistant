@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>
+  // Serve React/ReactDOM from this machine instead of unpkg.com so the UI
+  // works with zero internet access, matching the rest of this project.
+  // support.js checks window.__resources[<cdn url>] before falling back
+  // to the network (see cdnScriptFor in support.js).
+  window.__resources = {
+    "https://unpkg.com/react@18.3.1/umd/react.production.min.js": "./vendor/react.production.min.js",
+    "https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js": "./vendor/react-dom.production.min.js"
+  };
+</script>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <!-- No Google Fonts CDN: this project is zero-internet-dependency, so we
+       fall back to the system sans-serif/monospace already set as the
+       second font in every font-family below. -->
+  <style>
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes dotPulse { 0%, 80%, 100% { opacity: .25; transform: scale(0.85); } 40% { opacity: 1; transform: scale(1); } }
+    body { margin: 0; background: #F6F7FB; }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-thumb { background: #D6DAE5; border-radius: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    a { color: #4338CA; }
+    a:hover { color: #362FA6; }
+  </style>
+</helmet>
+
+<div style="display:flex;height:100vh;width:100%;background:#F6F7FB;color:#12141D;font-family:'Plus Jakarta Sans',sans-serif;overflow:hidden;">
+
+  <aside style="width:300px;min-width:300px;background:#FFFFFF;border-right:1px solid #E3E6EE;display:flex;flex-direction:column;padding:24px 20px;gap:26px;overflow-y:auto;">
+
+    <div style="display:flex;align-items:center;gap:12px;">
+      <sc-if value="{{ isGeometricLogo }}" hint-placeholder-val="{{ true }}">
+        <div style="width:40px;height:40px;border-radius:11px;background:{{ logoGradient }};display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 3px 8px {{ accentSoftBorder }};">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M3.5 17V8l4 5 4.5-7 4.5 7 4-5v9" stroke="#FFFFFF" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      </sc-if>
+      <sc-if value="{{ isInitialsLogo }}" hint-placeholder-val="{{ false }}">
+        <div style="width:40px;height:40px;border-radius:10px;background:{{ accent }};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <span style="font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:13px;color:#FFFFFF;letter-spacing:0.5px;">MMA</span>
+        </div>
+      </sc-if>
+      <div style="display:flex;flex-direction:column;gap:2px;min-width:0;">
+        <div style="font-size:15px;font-weight:700;line-height:1.2;">Foundry RAG Assistant</div>
+        <div style="font-size:12px;color:#8B90A0;line-height:1.3;">Local document Q&amp;A</div>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:6px;padding:6px 10px;background:#ECFDF3;border:1px solid #ABEFC6;border-radius:20px;width:fit-content;">
+      <span style="width:6px;height:6px;border-radius:50%;background:#067647;flex-shrink:0;"></span>
+      <span style="font-size:11.5px;font-weight:600;color:#067647;">Zero cloud calls · fully offline</span>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <div style="font-size:11px;font-weight:700;color:#8B90A0;text-transform:uppercase;letter-spacing:0.6px;">Knowledge base</div>
+      <div style="display:flex;gap:10px;">
+        <div style="flex:1;background:#FBFBFD;border:1px solid #E3E6EE;border-radius:12px;padding:12px 14px;">
+          <div style="font-size:20px;font-weight:800;line-height:1.1;">{{ chunkCount }}</div>
+          <div style="font-size:11.5px;color:#5B6072;margin-top:3px;">Chunks</div>
+        </div>
+        <div style="flex:1;background:#FBFBFD;border:1px solid #E3E6EE;border-radius:12px;padding:12px 14px;">
+          <div style="font-size:20px;font-weight:800;line-height:1.1;">{{ docCount }}</div>
+          <div style="font-size:11.5px;color:#5B6072;margin-top:3px;">Documents</div>
+        </div>
+      </div>
+
+      <button onClick="{{ toggleDocs }}" style="display:flex;align-items:center;justify-content:space-between;background:transparent;border:none;padding:4px 2px;cursor:pointer;font-family:inherit;">
+        <span style="font-size:12.5px;color:#5B6072;font-weight:600;">View indexed documents</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" style="transform:{{ docsChevronTransform }};transition:transform .15s ease;">
+          <path d="M6 9l6 6 6-6" stroke="#8B90A0" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+
+      <sc-if value="{{ docsExpanded }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:6px;padding-top:2px;">
+          <sc-for list="{{ documents }}" as="doc" hint-placeholder-count="6">
+            <div style="display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:8px;background:#FBFBFD;border:1px solid #EEF0F5;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;">
+                <path d="M6 2h9l5 5v13a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2z" stroke="#8B90A0" stroke-width="1.8" stroke-linejoin="round"/>
+                <path d="M15 2v5h5" stroke="#8B90A0" stroke-width="1.8" stroke-linejoin="round"/>
+              </svg>
+              <span style="font-size:12.5px;color:#333645;">{{ doc.label }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <div style="font-size:11px;font-weight:700;color:#8B90A0;text-transform:uppercase;letter-spacing:0.6px;">Models · Foundry Local</div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div style="display:flex;flex-direction:column;gap:3px;background:{{ accentSoft }};border:1px solid {{ accentSoftBorder }};border-radius:10px;padding:9px 12px;">
+          <span style="font-size:11px;color:#5B6072;font-weight:600;">Chat</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:{{ accent }};font-weight:600;word-break:break-word;">{{ chatModel }}</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:3px;background:{{ accentSoft }};border:1px solid {{ accentSoftBorder }};border-radius:10px;padding:9px 12px;">
+          <span style="font-size:11px;color:#5B6072;font-weight:600;">Embeddings</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:{{ accent }};font-weight:600;word-break:break-word;">{{ embedderName }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <div style="font-size:11px;font-weight:700;color:#8B90A0;text-transform:uppercase;letter-spacing:0.6px;">Pipeline</div>
+      <div style="display:flex;flex-direction:column;">
+        <sc-for list="{{ thinkingStages }}" as="stage" hint-placeholder-count="3">
+          <div style="display:flex;gap:10px;">
+            <div style="display:flex;flex-direction:column;align-items:center;">
+              <div style="width:20px;height:20px;border-radius:50%;background:{{ stage.dotBg }};border:2px solid {{ stage.dotBorder }};display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s ease;">
+                <span style="font-size:10px;font-weight:700;color:{{ stage.dotText }};">{{ stage.num }}</span>
+              </div>
+              <sc-if value="{{ stage.showConnector }}" hint-placeholder-val="{{ true }}">
+                <div style="width:2px;flex:1;min-height:20px;background:#E3E6EE;"></div>
+              </sc-if>
+            </div>
+            <div style="padding-bottom:16px;">
+              <div style="font-size:12.5px;font-weight:700;color:{{ stage.labelColor }};">{{ stage.name }}</div>
+              <div style="font-size:11.5px;color:#8B90A0;margin-top:1px;line-height:1.35;">{{ stage.desc }}</div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="margin-top:auto;padding-top:16px;border-top:1px solid #EEF0F5;">
+      <div style="font-size:11px;color:#8B90A0;">MMA · Foundry Local RAG Assistant</div>
+      <div style="font-size:10.5px;color:#B7BBC8;margin-top:2px;">SQLite vector store · retrieve → augment → generate</div>
+    </div>
+  </aside>
+
+  <main style="flex:1;display:flex;flex-direction:column;min-width:0;height:100vh;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 32px;border-bottom:1px solid #E3E6EE;background:#FFFFFF;flex-shrink:0;">
+      <div>
+        <div style="font-size:18px;font-weight:700;">Ask your documents</div>
+        <div style="font-size:12.5px;color:#8B90A0;margin-top:2px;">Answers are grounded only in the indexed knowledge base</div>
+      </div>
+      <sc-if value="{{ hasMessages }}" hint-placeholder-val="{{ false }}">
+        <button onClick="{{ onClear }}" style="background:#FFFFFF;border:1px solid #E3E6EE;color:#5B6072;font-family:inherit;font-size:12.5px;font-weight:600;padding:8px 14px;border-radius:8px;cursor:pointer;">Clear conversation</button>
+      </sc-if>
+    </div>
+
+    <sc-if value="{{ showEmptyKbBanner }}" hint-placeholder-val="{{ false }}">
+      <div style="margin:16px 32px 0;padding:12px 16px;background:#FFFAEB;border:1px solid #FEDF89;border-radius:10px;font-size:13px;color:#B54708;flex-shrink:0;">
+        Knowledge base is empty. Run <code style="font-family:'IBM Plex Mono',monospace;">python main.py ingest</code> first, then reload this page.
+      </div>
+    </sc-if>
+
+    <div style="flex:1;overflow-y:auto;padding:28px 32px;display:flex;flex-direction:column;gap:20px;">
+
+      <sc-if value="{{ showEmptyState }}" hint-placeholder-val="{{ true }}">
+        <div style="margin:auto;max-width:560px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:20px;">
+          <div style="width:56px;height:56px;border-radius:14px;background:{{ accentSoft }};border:1px solid {{ accentSoftBorder }};display:flex;align-items:center;justify-content:center;">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+              <path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15.5l-1.9-4.6L5.5 9l4.6-1.9L12 3z" stroke="{{ accent }}" stroke-width="1.6" stroke-linejoin="round"/>
+              <path d="M19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9L19 15z" stroke="{{ accent }}" stroke-width="1.6" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div>
+            <div style="font-size:20px;font-weight:800;">Query the knowledge base</div>
+            <div style="font-size:13.5px;color:#5B6072;margin-top:8px;line-height:1.55;">Every answer is retrieved from indexed documents and generated on-device with Foundry Local — no request ever leaves this machine.</div>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;">
+            <sc-for list="{{ suggestions }}" as="s" hint-placeholder-count="4">
+              <button onClick="{{ s.onClick }}" style="background:#FFFFFF;border:1px solid #E3E6EE;color:#333645;font-family:inherit;font-size:12.5px;font-weight:500;padding:9px 14px;border-radius:20px;cursor:pointer;text-align:left;">{{ s.label }}</button>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-for list="{{ messages }}" as="m" hint-placeholder-count="0">
+        <div style="display:flex;flex-direction:column;align-items:{{ m.align }};gap:6px;animation:fadeInUp .3s ease;">
+          <sc-if value="{{ m.isUser }}" hint-placeholder-val="{{ false }}">
+            <div style="max-width:70%;background:{{ accent }};color:#FFFFFF;padding:12px 16px;border-radius:14px 14px 4px 14px;font-size:14.5px;line-height:1.5;">{{ m.content }}</div>
+          </sc-if>
+          <sc-if value="{{ m.isAssistant }}" hint-placeholder-val="{{ false }}">
+            <div style="max-width:78%;display:flex;flex-direction:column;gap:10px;">
+              <div style="background:#FFFFFF;border:1px solid #E3E6EE;padding:14px 16px;border-radius:14px 14px 14px 4px;font-size:14.5px;line-height:1.6;color:#1D1F2B;">{{ m.content }}</div>
+
+              <sc-if value="{{ m.hasSources }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;flex-direction:column;gap:8px;">
+                  <button onClick="{{ m.toggleSources }}" style="display:flex;align-items:center;gap:6px;background:transparent;border:none;padding:0 4px;cursor:pointer;font-family:inherit;width:fit-content;">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" style="transform:{{ m.sourcesChevron }};transition:transform .15s ease;">
+                      <path d="M6 9l6 6 6-6" stroke="#8B90A0" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span style="font-size:12px;font-weight:600;color:#5B6072;">Retrieved context · {{ m.elapsed }}s</span>
+                  </button>
+                  <sc-if value="{{ m.sourcesExpanded }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;flex-direction:column;gap:8px;">
+                      <sc-for list="{{ m.sources }}" as="src" hint-placeholder-count="2">
+                        <div style="background:#FBFBFD;border:1px solid #E3E6EE;border-radius:10px;padding:11px 14px;">
+                          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+                            <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#333645;font-weight:600;">{{ src.doc }} <span style="color:#8B90A0;font-weight:400;">· chunk {{ src.chunkIndex }}</span></span>
+                            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;background:{{ src.simBg }};color:{{ src.simColor }};border:1px solid {{ src.simBorder }};flex-shrink:0;">{{ src.similarity }}</span>
+                          </div>
+                          <div style="font-size:12.5px;color:#5B6072;margin-top:6px;line-height:1.5;">{{ src.snippet }}</div>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </sc-if>
+                </div>
+              </sc-if>
+            </div>
+          </sc-if>
+        </div>
+      </sc-for>
+
+      <sc-if value="{{ isThinking }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;align-items:flex-start;gap:6px;">
+          <div style="background:#FFFFFF;border:1px solid #E3E6EE;padding:14px 18px;border-radius:14px 14px 14px 4px;display:flex;align-items:center;gap:12px;">
+            <span style="font-size:13px;font-weight:600;color:#333645;">{{ thinkingLabel }}</span>
+            <div style="display:flex;gap:4px;">
+              <span style="width:5px;height:5px;border-radius:50%;background:{{ accent }};animation:dotPulse 1.1s ease-in-out infinite;animation-delay:0s;"></span>
+              <span style="width:5px;height:5px;border-radius:50%;background:{{ accent }};animation:dotPulse 1.1s ease-in-out infinite;animation-delay:0.15s;"></span>
+              <span style="width:5px;height:5px;border-radius:50%;background:{{ accent }};animation:dotPulse 1.1s ease-in-out infinite;animation-delay:0.3s;"></span>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+    </div>
+
+    <div style="padding:18px 32px 22px;border-top:1px solid #E3E6EE;background:#FFFFFF;flex-shrink:0;">
+      <div style="display:flex;gap:10px;max-width:900px;">
+        <input type="text" value="{{ input }}" onChange="{{ onInputChange }}" onKeyDown="{{ onKeyDown }}" placeholder="Ask a question about the documents..." style="flex:1;font-family:inherit;font-size:14px;padding:13px 16px;border-radius:10px;border:1px solid #D6DAE5;outline:none;background:#FBFBFD;color:#12141D;"/>
+        <button onClick="{{ onSend }}" disabled="{{ sendDisabled }}" style="background:{{ sendBg }};color:#FFFFFF;border:none;border-radius:10px;padding:0 20px;cursor:pointer;display:flex;align-items:center;gap:8px;font-family:inherit;font-size:13.5px;font-weight:700;">
+          Send
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+            <path d="M4 12h16M13 6l6 6-6 6" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+      <div style="font-size:11.5px;color:#8B90A0;margin-top:9px;">Grounded strictly in indexed documents · zero cloud calls · SQLite vector store</div>
+    </div>
+  </main>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;$preview&quot;: {&quot;width&quot;: 1400, &quot;height&quot;: 900},
+  &quot;accentColor&quot;: {&quot;editor&quot;: &quot;color&quot;, &quot;default&quot;: &quot;#4338CA&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;options&quot;: [&quot;#4338CA&quot;, &quot;#0F766E&quot;, &quot;#B45309&quot;, &quot;#1F2937&quot;], &quot;section&quot;: &quot;Branding&quot;},
+  &quot;logoVariant&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;default&quot;: &quot;geometric&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;options&quot;: [&quot;geometric&quot;, &quot;initials&quot;], &quot;section&quot;: &quot;Branding&quot;}
+}">
+const STAGE_NAMES = [
+  { name: "Retrieve", ing: "Retrieving", desc: "Embed question, rank chunks by cosine similarity" },
+  { name: "Augment", ing: "Augmenting", desc: "Inject top matches into the system prompt" },
+  { name: "Generate", ing: "Generating", desc: "The local chat model drafts a grounded, cited answer" }
+];
+
+function simColors(sim) {
+  if (sim >= 0.65) return { simBg: "#ECFDF3", simColor: "#067647", simBorder: "#ABEFC6" };
+  if (sim >= 0.45) return { simBg: "#FFFAEB", simColor: "#B54708", simBorder: "#FEDF89" };
+  return { simBg: "#F2F4F7", simColor: "#5B6072", simBorder: "#E3E6EE" };
+}
+
+let uid = 0;
+
+class Component extends DCLogic {
+  state = {
+    messages: [],
+    input: "",
+    isThinking: false,
+    thinkingStage: -1,
+    docsExpanded: false,
+    collapsedIds: [],
+    chunkCount: 0,
+    docCount: 0,
+    documents: [],
+    chatModel: "",
+    embedderName: "",
+    isEmpty: false,
+    statsLoaded: false
+  };
+
+  componentDidMount() {
+    this.loadStats();
+  }
+
+  loadStats() {
+    fetch("/api/stats")
+      .then(res => res.json())
+      .then(data => {
+        this.setState({
+          chunkCount: data.chunkCount,
+          docCount: data.docCount,
+          documents: data.documents,
+          chatModel: data.chatModel,
+          embedderName: data.embedderName,
+          isEmpty: data.isEmpty,
+          statsLoaded: true
+        });
+      })
+      .catch(() => this.setState({ statsLoaded: true }));
+  }
+
+  send(text) {
+    const question = (text !== undefined ? text : this.state.input).trim();
+    if (!question || this.state.isThinking || this.state.isEmpty) return;
+    const userMsg = { id: ++uid, role: "user", content: question };
+    this.setState(s => ({ messages: [...s.messages, userMsg], input: "", isThinking: true, thinkingStage: 0 }));
+
+    const t1 = setTimeout(() => this.setState({ thinkingStage: 1 }), 350);
+    const t2 = setTimeout(() => this.setState({ thinkingStage: 2 }), 700);
+
+    const finish = (assistantMsg) => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      this.setState(s => ({ messages: [...s.messages, assistantMsg], isThinking: false, thinkingStage: -1 }));
+    };
+
+    fetch("/api/ask", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question })
+    })
+      .then(res => res.json().then(data => ({ ok: res.ok, data })))
+      .then(({ ok, data }) => {
+        finish(ok
+          ? { id: ++uid, role: "assistant", content: data.answer, sources: data.sources || [], elapsed: data.elapsed }
+          : { id: ++uid, role: "assistant", content: "Error: " + (data.error || "request failed"), sources: [], elapsed: 0 });
+      })
+      .catch(err => {
+        finish({ id: ++uid, role: "assistant", content: "Error: " + err.message, sources: [], elapsed: 0 });
+      });
+  }
+
+  renderVals() {
+    const { messages, input, isThinking, thinkingStage, docsExpanded, collapsedIds,
+      chunkCount, docCount, documents, chatModel, embedderName, isEmpty, statsLoaded } = this.state;
+    const accent = this.props.accentColor ?? "#4338CA";
+    const accentSoft = `color-mix(in oklch, ${accent} 9%, white)`;
+    const accentSoftBorder = `color-mix(in oklch, ${accent} 24%, white)`;
+    const accentMuted = `color-mix(in oklch, ${accent} 32%, white)`;
+    const logoGradient = `linear-gradient(135deg, ${accent}, color-mix(in oklch, ${accent} 78%, black))`;
+    const logoVariant = this.props.logoVariant ?? "geometric";
+
+    const thinkingStages = STAGE_NAMES.map((st, i) => {
+      const active = isThinking && thinkingStage === i;
+      const done = isThinking && thinkingStage > i;
+      return {
+        name: st.name,
+        desc: st.desc,
+        num: String(i + 1),
+        showConnector: i < STAGE_NAMES.length - 1,
+        dotBg: active ? accent : done ? accentSoft : "#FFFFFF",
+        dotBorder: active || done ? accent : "#E3E6EE",
+        dotText: active ? "#FFFFFF" : "#8B90A0",
+        labelColor: active ? "#12141D" : "#5B6072"
+      };
+    });
+
+    const builtMessages = messages.map(m => {
+      if (m.role === "user") {
+        return { id: m.id, isUser: true, isAssistant: false, content: m.content, align: "flex-end" };
+      }
+      const expanded = !collapsedIds.includes(m.id);
+      const sources = (m.sources || []).map(src => ({
+        doc: src.doc, chunkIndex: src.chunkIndex, similarity: src.similarity.toFixed(2),
+        snippet: src.snippet, ...simColors(src.similarity)
+      }));
+      return {
+        id: m.id, isUser: false, isAssistant: true, content: m.content, align: "flex-start",
+        elapsed: m.elapsed, hasSources: sources.length > 0, sources,
+        sourcesExpanded: expanded,
+        sourcesChevron: expanded ? "rotate(180deg)" : "rotate(0deg)",
+        toggleSources: () => this.setState(s => ({
+          collapsedIds: expanded ? [...s.collapsedIds, m.id] : s.collapsedIds.filter(id => id !== m.id)
+        }))
+      };
+    });
+
+    const suggestionLabels = [
+      "Why does RAG reduce hallucinations?",
+      "What is cosine similarity used for?",
+      "Why SQLite instead of a vector database?",
+      "How does the ingestion pipeline work?"
+    ];
+
+    return {
+      messages: builtMessages,
+      input,
+      onInputChange: e => this.setState({ input: e.target.value }),
+      onKeyDown: e => { if (e.key === "Enter") this.send(); },
+      onSend: () => this.send(),
+      sendDisabled: !input.trim() || isThinking || isEmpty,
+      sendBg: (!input.trim() || isThinking || isEmpty) ? accentMuted : accent,
+      accent, accentSoft, accentSoftBorder, logoGradient,
+      isGeometricLogo: logoVariant === "geometric",
+      isInitialsLogo: logoVariant !== "geometric",
+      isThinking,
+      thinkingLabel: isThinking ? STAGE_NAMES[Math.min(thinkingStage, 2)].ing + " context" : "",
+      thinkingStages,
+      showEmptyState: messages.length === 0 && !isThinking,
+      hasMessages: messages.length > 0,
+      showEmptyKbBanner: statsLoaded && isEmpty,
+      suggestions: suggestionLabels.map(label => ({ label, onClick: () => this.send(label) })),
+      documents: documents.map(d => ({ label: d })),
+      docsExpanded,
+      docsChevronTransform: docsExpanded ? "rotate(180deg)" : "rotate(0deg)",
+      toggleDocs: () => this.setState(s => ({ docsExpanded: !s.docsExpanded })),
+      chunkCount,
+      docCount,
+      chatModel: chatModel || "…",
+      embedderName: embedderName || "…",
+      onClear: () => this.setState({ messages: [], collapsedIds: [] })
+    };
+  }
+}
+</script>
+</body>
+</html>
