@@ -43,7 +43,7 @@ cloud account, no API keys, no internet needed at question time.
 1. **Ingest** — documents in `data/docs/` are split into overlapping ~900-character
    chunks, embedded locally (see *Embedding backends* below), and stored in SQLite.
 2. **Retrieve** — the question is embedded with the same model; all chunks are
-   ranked by cosine similarity and the top 3 above a 0.30 threshold are kept.
+      ranked by cosine similarity and the top 3 above a 0.42 threshold are kept.
 3. **Augment** — retrieved chunks (labeled with their source document) are
    injected into the system prompt with strict grounding rules.
 4. **Generate** — `phi-3.5-mini` produces the answer locally, citing sources.
